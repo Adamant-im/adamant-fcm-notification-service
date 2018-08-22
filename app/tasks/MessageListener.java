@@ -11,6 +11,7 @@ import core.entities.Transaction;
 import core.entities.transaction_assets.TransactionChatAsset;
 import core.responses.TransactionList;
 import entities.PushToken;
+import helpers.Misc;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -83,8 +84,8 @@ public class MessageListener {
                     .defer(() -> Flowable.just(currentHeight))
                     .subscribeOn(Schedulers.io())
                     .flatMap((height) -> {
-                        Logger.getGlobal().warning("Height: " + height);
-                        AdamantApi api = randomApi();
+                        Logger.getGlobal().info("Height: " + height);
+                        AdamantApi api = Misc.randomItem(adamantApis);
                         Flowable<TransactionList<TransactionChatAsset>> transactionFlowable = null;
                         if (offsetItems > 0) {
                             transactionFlowable = api.getMessageTransactions(AdamantApi.ORDER_BY_TIMESTAMP_ASC, offsetItems);
@@ -112,7 +113,7 @@ public class MessageListener {
                         }
                     })
                     .doOnNext(transaction -> {
-                        Logger.getGlobal().warning("Check transaction: " + transaction.getId());
+                        Logger.getGlobal().info("Check transaction: " + transaction.getId());
                         List<PushToken> pushTokens = PushToken
                                 .finder
                                 .query()
@@ -143,8 +144,8 @@ public class MessageListener {
     }
 
     private void sendPush(List<PushToken> pushTokens, Transaction<TransactionChatAsset> transaction) {
-        Logger.getGlobal().warning("PUSH TO: " + pushTokens + ". TransactionId: " + transaction.getId());
         for (PushToken token : pushTokens){
+            Logger.getGlobal().info("PUSH TO: " + token.getToken() + ". TransactionId: " + transaction.getId());
             try {
                 //TODO: Build rich push-message
                 Message message = Message.builder()
@@ -153,16 +154,13 @@ public class MessageListener {
 
                 //TODO: Send Async and another thread
                 FirebaseMessaging.getInstance().send(message);
+
+                //TODO: Unsubscribe if error
             } catch (FirebaseMessagingException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private AdamantApi randomApi() {
-        int index =  (int) Math.round(Math.floor(Math.random() * adamantApis.size()));
-        if (index >= adamantApis.size()){index = adamantApis.size() - 1;}
 
-        return adamantApis.get(index);
-    }
 }

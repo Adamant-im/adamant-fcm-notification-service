@@ -26,6 +26,22 @@ public interface AdamantApi {
             @Query("offset") long offset
     );
 
+    @GET("chats/get")
+    Flowable<TransactionList<TransactionChatAsset>> getMessageTransactions(
+            @Query("recipientId") String recipientId,
+            @Query("fromHeight") long height,
+            @Query("orderBy") String order,
+            @Query("type") int type
+    );
+
+    @GET("chats/get")
+    Flowable<TransactionList<TransactionChatAsset>> getMessageTransactions(
+            @Query("recipientId") String recipientId,
+            @Query("orderBy") String order,
+            @Query("offset") long offset,
+            @Query("type") int type
+    );
+
     @GET("accounts/getPublicKey")
     Flowable<PublicKeyResponse> getPublicKey(@Query("address") String address);
 

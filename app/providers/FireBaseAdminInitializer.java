@@ -9,11 +9,11 @@ import com.typesafe.config.Config;
 import java.io.FileInputStream;
 import java.util.logging.Logger;
 
-public class FireBaseAdminProvider {
+public class FireBaseAdminInitializer {
     private Config config;
 
     @Inject
-    public FireBaseAdminProvider(Config config) {
+    public FireBaseAdminInitializer(Config config) {
         this.config = config;
         init();
     }
