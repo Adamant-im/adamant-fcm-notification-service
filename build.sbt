@@ -11,7 +11,8 @@ scalaVersion := "2.11.11"
 
 libraryDependencies ++= Seq( javaJdbc , ehcache , javaWs )
 libraryDependencies += "org.postgresql" % "postgresql" % "42.1.4"
-libraryDependencies += "us.raudi.pushraven" % "Pushraven" % "1.1.0"
+// https://mvnrepository.com/artifact/com.google.firebase/firebase-admin
+libraryDependencies += "com.google.firebase" % "firebase-admin" % "6.3.0"
 libraryDependencies += "com.goterl.lazycode" % "lazysodium-java" % "3.3.0"
 libraryDependencies += "io.reactivex.rxjava2" % "rxjava" % "2.2.0"
 // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit

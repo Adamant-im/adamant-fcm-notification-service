@@ -1,10 +1,5 @@
 package core.responses;
 
-import core.entities.Transaction;
-
-import java.math.BigInteger;
-import java.util.List;
-
 public class BlockHeight {
     private int nodeTimestamp;
     private boolean success;

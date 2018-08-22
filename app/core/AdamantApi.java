@@ -1,18 +1,10 @@
 package core;
 
-import core.entities.UnnormalizedTransactionMessage;
 import core.entities.transaction_assets.TransactionChatAsset;
-import core.entities.transaction_assets.TransactionStateAsset;
-import core.requests.NewAccount;
-import core.requests.ProcessTransaction;
 import core.responses.*;
 import io.reactivex.Flowable;
-import retrofit2.http.Body;
 import retrofit2.http.GET;
-import retrofit2.http.POST;
 import retrofit2.http.Query;
-
-import java.math.BigInteger;
 
 public interface AdamantApi {
     long BASE_TIMESTAMP = 1504371600000L; //2017-08-02 17:00:00

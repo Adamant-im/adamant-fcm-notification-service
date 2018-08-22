@@ -1,6 +1,10 @@
 package tasks;
 
 import akka.actor.ActorSystem;
+import com.google.api.core.ApiFuture;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.Message;
 import com.typesafe.config.Config;
 import core.AdamantApi;
 import core.entities.Transaction;
@@ -109,14 +113,14 @@ public class MessageListener {
                     })
                     .doOnNext(transaction -> {
                         Logger.getGlobal().warning("Check transaction: " + transaction.getId());
-                        PushToken pushToken = PushToken
+                        List<PushToken> pushTokens = PushToken
                                 .finder
                                 .query()
                                 .where()
                                 .eq("address", transaction.getRecipientId())
-                                .findOne();
-                        if (pushToken != null){
-                            sendPush(pushToken, transaction);
+                                .findList();
+                        if (pushTokens != null){
+                            sendPush(pushTokens, transaction);
                         }
                     })
                     .doOnError(error -> Logger.getGlobal().warning(error.getMessage()))
@@ -138,8 +142,21 @@ public class MessageListener {
         }
     }
 
-    private void sendPush(PushToken pushToken, Transaction<TransactionChatAsset> transaction) {
-        Logger.getGlobal().warning("PUSH TO: " + pushToken.getToken() + ". TransactionId: " + transaction.getId());
+    private void sendPush(List<PushToken> pushTokens, Transaction<TransactionChatAsset> transaction) {
+        Logger.getGlobal().warning("PUSH TO: " + pushTokens + ". TransactionId: " + transaction.getId());
+        for (PushToken token : pushTokens){
+            try {
+                //TODO: Build rich push-message
+                Message message = Message.builder()
+                        .setToken(token.getToken())
+                        .build();
+
+                //TODO: Send Async and another thread
+                FirebaseMessaging.getInstance().send(message);
+            } catch (FirebaseMessagingException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private AdamantApi randomApi() {
