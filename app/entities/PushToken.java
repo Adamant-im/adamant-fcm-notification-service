@@ -5,6 +5,7 @@ import io.ebean.annotation.CreatedTimestamp;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity
 @Table(name = "tokens")
@@ -30,6 +31,9 @@ public class PushToken {
     @CreatedTimestamp
     @Column(name = "created_at")
     private Timestamp createdAt;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<MessageData> messages;
 
     public long getId() {
         return id;
@@ -77,5 +81,13 @@ public class PushToken {
 
     public void setExtendedPush(boolean extendedPush) {
         this.extendedPush = extendedPush;
+    }
+
+    public List<MessageData> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<MessageData> messages) {
+        this.messages = messages;
     }
 }

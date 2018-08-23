@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class SubscribeListener {
+public class NewTokenListenTask {
     private final ActorSystem actorSystem;
     private final ExecutionContext executionContext;
     private Config listenerConfig;
@@ -40,7 +40,7 @@ public class SubscribeListener {
     private CompositeDisposable subscriptions = new CompositeDisposable();
 
     @Inject
-    public SubscribeListener(
+    public NewTokenListenTask(
             Config config,
             ActorSystem actorSystem,
             List<AdamantApi> adamantApis,
@@ -54,7 +54,7 @@ public class SubscribeListener {
 
         listenerConfig = config.getConfig("subscribe-listener");
         if(listenerConfig == null){
-            Logger.getGlobal().warning("SubscribeListener not configured!");
+            Logger.getGlobal().warning("NewTokenListenTask not configured!");
             return;
         }
 
@@ -123,10 +123,15 @@ public class SubscribeListener {
                         boolean valid = (parsedSubscription != null && parsedSubscription.has("provider") && parsedSubscription.has("token"));
 
                         if (valid){
+                            String token = parsedSubscription.get("token").asText();
+                            String provider = parsedSubscription.get("provider").asText();
+
+                            if (!provider.equalsIgnoreCase("fcm")){return;}
+
                             PushToken pushToken = new PushToken();
                             pushToken.setAddress(transaction.getSenderId());
-                            pushToken.setToken(parsedSubscription.get("token").asText());
-                            pushToken.setProvider(parsedSubscription.get("provider").asText());
+                            pushToken.setToken(token);
+                            pushToken.setProvider(provider);
 
                             PushToken existingToken = PushToken
                                     .finder

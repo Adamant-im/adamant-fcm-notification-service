@@ -1,31 +1,26 @@
 package tasks;
 
 import akka.actor.ActorSystem;
-import com.google.api.core.ApiFuture;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
 import com.typesafe.config.Config;
 import core.AdamantApi;
-import core.entities.Transaction;
 import core.entities.transaction_assets.TransactionChatAsset;
 import core.responses.TransactionList;
+import entities.MessageData;
 import entities.PushToken;
 import helpers.Misc;
+import io.ebean.Ebean;
 import io.reactivex.Flowable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import scala.concurrent.ExecutionContext;
 
 import javax.inject.Inject;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class MessageListener {
+public class NewMessageListenTask {
     private final ActorSystem actorSystem;
     private final ExecutionContext executionContext;
     private Config listenerConfig;
@@ -36,7 +31,7 @@ public class MessageListener {
     private long currentHeight = 1;
 
     @Inject
-    public MessageListener(ActorSystem actorSystem, ExecutionContext executionContext, Config listenerConfig, List<AdamantApi> adamantApis) {
+    public NewMessageListenTask(ActorSystem actorSystem, ExecutionContext executionContext, Config listenerConfig, List<AdamantApi> adamantApis) {
         this.actorSystem = actorSystem;
         this.executionContext = executionContext;
         this.listenerConfig = listenerConfig;
@@ -113,6 +108,7 @@ public class MessageListener {
                         }
                     })
                     .doOnNext(transaction -> {
+                        //TODO: Implement batch processing
                         Logger.getGlobal().info("Check transaction: " + transaction.getId());
                         List<PushToken> pushTokens = PushToken
                                 .finder
@@ -120,8 +116,18 @@ public class MessageListener {
                                 .where()
                                 .eq("address", transaction.getRecipientId())
                                 .findList();
-                        if (pushTokens != null){
-                            sendPush(pushTokens, transaction);
+
+                        if (pushTokens.size() > 0){
+                            List<MessageData> messageDataList = new ArrayList<>();
+
+                            for (PushToken pushToken : pushTokens){
+                                MessageData messageData = new MessageData();
+                                messageData.setPushToken(pushToken);
+                                messageData.setTransactionId(transaction.getId());
+                                messageDataList.add(messageData);
+                            }
+
+                            Ebean.saveAll(messageDataList);
                         }
                     })
                     .doOnError(error -> Logger.getGlobal().warning(error.getMessage()))
@@ -142,25 +148,5 @@ public class MessageListener {
                     .subscribe();
         }
     }
-
-    private void sendPush(List<PushToken> pushTokens, Transaction<TransactionChatAsset> transaction) {
-        for (PushToken token : pushTokens){
-            Logger.getGlobal().info("PUSH TO: " + token.getToken() + ". TransactionId: " + transaction.getId());
-            try {
-                //TODO: Build rich push-message
-                Message message = Message.builder()
-                        .setToken(token.getToken())
-                        .build();
-
-                //TODO: Send Async and another thread
-                FirebaseMessaging.getInstance().send(message);
-
-                //TODO: Unsubscribe if error
-            } catch (FirebaseMessagingException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 
 }
