@@ -8,7 +8,7 @@ export ADAMANT_FCM_DATABASE_URL = 'jdbc: postgresql: //127.0.0.1: 5432 / Your da
 
 export ADAMANT_FCM_DATABASE_LOGIN = 'Your database login'
 
-export ADAMANT_FCM_DATABASE_PASSWORD = 'Your datbase password'
+export ADAMANT_FCM_DATABASE_PASSWORD = 'Your database password'
 
 export ADAMANT_FCM_SERVER_KEY_FILE_PATH = 'Path to server admin json file (Take it in firebase console)'
 
