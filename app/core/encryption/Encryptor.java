@@ -10,16 +10,42 @@ import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import core.entities.Transaction;
 import core.entities.TransactionMessage;
 import core.entities.TransactionState;
+import io.github.novacrypto.bip39.SeedCalculator;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Logger;
 
 public class Encryptor {
     private final int NONCE_LENGTH = 24;
     private LazySodium sodium;
+    private SeedCalculator seedCalculator;
 
-    public Encryptor(LazySodium sodium) {
+    public Encryptor(LazySodium sodium, SeedCalculator seedCalculator) {
         this.sodium = sodium;
+        this.seedCalculator = seedCalculator;
+    }
+
+    public KeyPair getKeyPairFromPassPhrase(String passPhrase) {
+        KeyPair pair = null;
+
+        try {
+
+            byte[] blankCalculatedSeed = seedCalculator.calculateSeed(passPhrase, "");
+            String seedString = Hex.bytesToHex(blankCalculatedSeed);
+
+            byte[] seedForHash = Hex.encodeStringToHexArray(seedString);
+
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] seed = digest.digest(seedForHash);
+
+            pair = sodium.cryptoSignSeedKeypair(seed);
+
+        } catch (NoSuchAlgorithmException | SodiumException e) {
+            Logger.getGlobal().severe(e.getMessage());
+        }
+
+        return pair;
     }
 
     public String decryptMessage(String message, String ownMessage, String senderPublicKey, String mySecretKey) {

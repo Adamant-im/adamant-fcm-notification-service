@@ -3,6 +3,7 @@ package tasks;
 import akka.actor.ActorSystem;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
+import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.typesafe.config.Config;
 import contexts.SubscribeListenerExecutionContext;
 import core.AdamantApi;
@@ -63,7 +64,11 @@ public class NewTokenListenTask {
 
     private void  initialize() {
         String address = listenerConfig.getString("address");
-        String privateKey = listenerConfig.getString("private-key");
+        String passphrase = listenerConfig.getString("passphrase");
+
+        KeyPair keyPair = encryptor.getKeyPairFromPassPhrase(passphrase);
+
+        String privateKey = keyPair.getSecretKey().getAsHexString();
 
         //Grow Up mode (load all records from blockchain)
         //TODO: Max Height Mode (ignore old records in blockchain)

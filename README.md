@@ -14,6 +14,6 @@ export ADAMANT_FCM_SERVER_KEY_FILE_PATH = 'Path to server admin json file (Take 
 
 export ADAMANT_FCM_ADAMANT_ADDRESS = 'Your adamant address for subscriptions'
 
-export ADAMANT_FCM_ADAMANT_PRIVATE_KEY = 'Your adamant private key in hex string'
+export ADAMANT_FCM_ADAMANT_PASSPHRASE = 'Your adamant passphrase'
 
 export GCLOUD_PROJECT = 'adamant-messenger'
