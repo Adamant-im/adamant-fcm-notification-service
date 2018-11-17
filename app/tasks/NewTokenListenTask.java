@@ -168,5 +168,15 @@ public class NewTokenListenTask {
                 .retryWhen((retryHandler) -> retryHandler.delay(AdamantApi.SYNCHRONIZE_DELAY_SECONDS, TimeUnit.SECONDS))
                 .repeatWhen((completed) -> completed.delay(AdamantApi.SYNCHRONIZE_DELAY_SECONDS, TimeUnit.SECONDS))
                 .subscribe();
+
+        subscriptions.add(disposable);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        subscriptions.dispose();
+        subscriptions.clear();
+
+        super.finalize();
     }
 }

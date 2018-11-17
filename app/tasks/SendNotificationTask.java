@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 public class SendNotificationTask {
     private static final String TOKEN_NOT_REGISTERED = "registration-token-not-registered";
+    private static final String MISSMATCHED_CREDENTIAL = "mismatched-credential";
     private static final int BATCH_SIZE = 100;
     private final ActorSystem actorSystem;
     private final SendNotificationExecutionContext executionContext;
@@ -108,10 +109,13 @@ public class SendNotificationTask {
                     if (t instanceof FirebaseMessagingException){
                         FirebaseMessagingException exception = (FirebaseMessagingException)t;
                         String errCode = exception.getErrorCode();
+                        Logger.getGlobal().severe("Error code: " + errCode);
                         switch (errCode){
+                            case MISSMATCHED_CREDENTIAL:
                             case TOKEN_NOT_REGISTERED : {
                                 Ebean.delete(data.getPushToken());
                             }
+                            break;
                         }
                     }
                 } catch (Exception ex){

@@ -3,14 +3,19 @@ package tasks;
 import akka.actor.ActorSystem;
 import com.typesafe.config.Config;
 import core.AdamantApi;
+import core.entities.Transaction;
 import core.entities.transaction_assets.TransactionChatAsset;
 import core.responses.TransactionList;
 import entities.MessageData;
 import entities.PushToken;
 import helpers.Misc;
 import io.ebean.Ebean;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.MaybeSource;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import scala.concurrent.ExecutionContext;
 
@@ -29,6 +34,8 @@ public class NewMessageListenTask {
     private long offsetItems = 0;
     private long countItems = 0;
     private long currentHeight = 1;
+
+    private CompositeDisposable subscriptions = new CompositeDisposable();
 
     @Inject
     public NewMessageListenTask(ActorSystem actorSystem, ExecutionContext executionContext, Config listenerConfig, List<AdamantApi> adamantApis) {
@@ -64,18 +71,24 @@ public class NewMessageListenTask {
                         return previous;
                     }
                 })
+                .toObservable()
+                .toFlowable(BackpressureStrategy.LATEST)
+                .flatMap(this::startScan)
                 .subscribe(
-                        this::startScan,
-                        error -> Logger.getGlobal().warning(error.getMessage())
+                        transaction -> {},
+                        error -> Logger.getGlobal().severe(error.getMessage()),
+                        () -> {Logger.getGlobal().severe("New message listener was completed");}
                 );
+
+        subscriptions.add(subscribe);
     }
 
-    private void startScan(long maxHeight) {
+    private Flowable<Transaction<TransactionChatAsset>> startScan(long maxHeight) {
         if (maxHeight == 0){
-            Logger.getGlobal().severe("Max Height is 0!");
+            return Flowable.error(new Exception("Max Height is 0!"));
         } else {
             currentHeight = maxHeight;
-            Disposable disposable = Flowable
+            return Flowable
                     .defer(() -> Flowable.just(currentHeight))
                     .subscribeOn(Schedulers.io())
                     .flatMap((height) -> {
@@ -90,7 +103,7 @@ public class NewMessageListenTask {
                         return transactionFlowable;
                     })
                     .flatMap(transactionResponse -> {
-                        if (transactionResponse.isSuccess()){
+                        if (transactionResponse.isSuccess()) {
                             return Flowable.just(transactionResponse.getTransactions());
                         } else {
                             return Flowable.error(new Exception(transactionResponse.getError()));
@@ -117,10 +130,10 @@ public class NewMessageListenTask {
                                 .eq("address", transaction.getRecipientId())
                                 .findList();
 
-                        if (pushTokens.size() > 0){
+                        if (pushTokens.size() > 0) {
                             List<MessageData> messageDataList = new ArrayList<>();
 
-                            for (PushToken pushToken : pushTokens){
+                            for (PushToken pushToken : pushTokens) {
                                 MessageData messageData = new MessageData();
                                 messageData.setPushToken(pushToken);
                                 messageData.setTransactionId(transaction.getId());
@@ -133,7 +146,7 @@ public class NewMessageListenTask {
                     .doOnError(error -> Logger.getGlobal().warning(error.getMessage()))
                     .repeatUntil(() -> {
                         boolean noRepeat = countItems < AdamantApi.MAX_TRANSACTIONS_PER_REQUEST;
-                        if (noRepeat){
+                        if (noRepeat) {
                             countItems = 0;
                             offsetItems = 0;
                         } else {
@@ -141,12 +154,19 @@ public class NewMessageListenTask {
                             countItems = 0;
 
                         }
-                        return  noRepeat;
+                        return noRepeat;
                     })
                     .retryWhen((retryHandler) -> retryHandler.delay(AdamantApi.SYNCHRONIZE_DELAY_SECONDS, TimeUnit.SECONDS))
-                    .repeatWhen((completed) -> completed.delay(AdamantApi.SYNCHRONIZE_DELAY_SECONDS, TimeUnit.SECONDS))
-                    .subscribe();
+                    .repeatWhen((completed) -> completed.delay(AdamantApi.SYNCHRONIZE_DELAY_SECONDS, TimeUnit.SECONDS));
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        subscriptions.dispose();
+        subscriptions.clear();
+
+        super.finalize();
     }
 
 }
