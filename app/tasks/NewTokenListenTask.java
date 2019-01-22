@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import com.goterl.lazycode.lazysodium.utils.KeyPair;
 import com.typesafe.config.Config;
-import contexts.SubscribeListenerExecutionContext;
 import core.AdamantApi;
 import core.encryption.Encryptor;
 import core.entities.TransactionMessage;
@@ -28,8 +27,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class NewTokenListenTask {
-    private final ActorSystem actorSystem;
-    private final ExecutionContext executionContext;
+    private static final String ADD_ACTION = "add";
+    private static final String REMOVE_ACTION = "remove";
+
     private Config listenerConfig;
     private List<AdamantApi> adamantApis;
     private Encryptor encryptor;
@@ -43,13 +43,9 @@ public class NewTokenListenTask {
     @Inject
     public NewTokenListenTask(
             Config config,
-            ActorSystem actorSystem,
             List<AdamantApi> adamantApis,
-            Encryptor encryptor,
-            SubscribeListenerExecutionContext executionContext
+            Encryptor encryptor
     ) {
-        this.actorSystem = actorSystem;
-        this.executionContext = executionContext;
         this.adamantApis = adamantApis;
         this.encryptor = encryptor;
 
@@ -121,6 +117,8 @@ public class NewTokenListenTask {
                     TransactionMessage transactionMessage = asset.getChat();
                     if (transactionMessage == null){return;}
 
+                    //TODO: Refactor this. Too much code
+
                     try {
                         String decryptedMessage = encryptor.decryptMessage(transactionMessage.getMessage(), transactionMessage.getOwnMessage(), transaction.getSenderPublicKey(), privateKey);
 
@@ -130,6 +128,11 @@ public class NewTokenListenTask {
                         if (valid){
                             String token = parsedSubscription.get("token").asText();
                             String provider = parsedSubscription.get("provider").asText();
+                            JsonNode actionNode = parsedSubscription.get("action");
+                            String action = ADD_ACTION;
+                            if (actionNode != null) {
+                                action = parsedSubscription.get("action").asText();
+                            }
 
                             if (!provider.equalsIgnoreCase("fcm")){return;}
 
@@ -146,9 +149,14 @@ public class NewTokenListenTask {
                                     .eq("address", pushToken.getAddress())
                                     .findOne();
 
-                            if (existingToken == null){
-                                Ebean.save(pushToken);
+                            if (ADD_ACTION.equalsIgnoreCase(action)) {
+                                if (existingToken == null){
+                                    Ebean.save(pushToken);
+                                }
+                            } else if (REMOVE_ACTION.equalsIgnoreCase(action)) {
+                                Ebean.delete(existingToken);
                             }
+
                         }
 
                     }catch (Exception ex) {

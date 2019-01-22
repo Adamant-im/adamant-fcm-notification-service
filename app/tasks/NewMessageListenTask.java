@@ -1,7 +1,5 @@
 package tasks;
 
-import akka.actor.ActorSystem;
-import com.typesafe.config.Config;
 import core.AdamantApi;
 import core.entities.Transaction;
 import core.entities.transaction_assets.TransactionChatAsset;
@@ -12,12 +10,9 @@ import helpers.Misc;
 import io.ebean.Ebean;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.MaybeSource;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import scala.concurrent.ExecutionContext;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -26,9 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class NewMessageListenTask {
-    private final ActorSystem actorSystem;
-    private final ExecutionContext executionContext;
-    private Config listenerConfig;
     private List<AdamantApi> adamantApis;
 
     private long offsetItems = 0;
@@ -38,10 +30,7 @@ public class NewMessageListenTask {
     private CompositeDisposable subscriptions = new CompositeDisposable();
 
     @Inject
-    public NewMessageListenTask(ActorSystem actorSystem, ExecutionContext executionContext, Config listenerConfig, List<AdamantApi> adamantApis) {
-        this.actorSystem = actorSystem;
-        this.executionContext = executionContext;
-        this.listenerConfig = listenerConfig;
+    public NewMessageListenTask(List<AdamantApi> adamantApis) {
         this.adamantApis = adamantApis;
 
         init();
