@@ -126,6 +126,8 @@ public class NewTokenListenTask {
                         boolean valid = (parsedSubscription != null && parsedSubscription.has("provider") && parsedSubscription.has("token"));
 
                         if (valid){
+                            Logger.getGlobal().warning(transaction.getTimestamp() + " - " + parsedSubscription.toString());
+
                             String token = parsedSubscription.get("token").asText();
                             String provider = parsedSubscription.get("provider").asText();
                             JsonNode actionNode = parsedSubscription.get("action");
@@ -154,7 +156,13 @@ public class NewTokenListenTask {
                                     Ebean.save(pushToken);
                                 }
                             } else if (REMOVE_ACTION.equalsIgnoreCase(action)) {
-                                Ebean.delete(existingToken);
+                                if (existingToken != null) {
+                                    Ebean.delete(existingToken);
+                                }
+                            } else {
+                                if (existingToken == null){
+                                    Ebean.save(pushToken);
+                                }
                             }
 
                         }

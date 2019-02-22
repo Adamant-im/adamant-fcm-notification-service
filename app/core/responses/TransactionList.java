@@ -10,6 +10,7 @@ public class TransactionList<AT extends TransactionAsset> {
     private int nodeTimestamp;
     private boolean success;
     private List<Transaction<AT>> transactions;
+    private int count;
     private String error;
 
     public boolean isSuccess() {
@@ -42,5 +43,13 @@ public class TransactionList<AT extends TransactionAsset> {
 
     public void setNodeTimestamp(int nodeTimestamp) {
         this.nodeTimestamp = nodeTimestamp;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 }
