@@ -1,9 +1,11 @@
 package core.responses;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import core.entities.Transaction;
 import core.entities.transaction_assets.TransactionAsset;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TransactionWasNormalized<T extends TransactionAsset> {
     private int nodeTimestamp;
     private boolean success;

@@ -1,8 +1,10 @@
 package core.responses;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import core.entities.Account;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Authorization {
     private int nodeTimestamp;
     private boolean success;

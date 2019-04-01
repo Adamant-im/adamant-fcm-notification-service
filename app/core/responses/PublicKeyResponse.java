@@ -1,5 +1,8 @@
 package core.responses;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PublicKeyResponse {
     private int nodeTimestamp;
     private boolean success;

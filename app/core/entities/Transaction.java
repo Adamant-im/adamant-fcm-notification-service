@@ -1,6 +1,7 @@
 package core.entities;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import core.encryption.Hex;
 import core.entities.transaction_assets.TransactionAsset;
 
@@ -9,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Transaction<T extends TransactionAsset> implements WithBytesDigest {
     public static final int SEND = 0;
     public static final int SIGNATURE = 1;

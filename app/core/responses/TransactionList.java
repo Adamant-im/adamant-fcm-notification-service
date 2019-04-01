@@ -1,11 +1,13 @@
 package core.responses;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import core.entities.Transaction;
 import core.entities.transaction_assets.TransactionAsset;
 
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TransactionList<AT extends TransactionAsset> {
     private int nodeTimestamp;
     private boolean success;
